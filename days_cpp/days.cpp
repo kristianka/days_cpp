@@ -172,6 +172,27 @@ std::vector<std::string> remove_commas(std::string args)
 	return separated_args;
 }
 
+void print_day_format(int delta, auto event)
+{
+	std::ostringstream line;
+	line << event << " - ";
+	if (delta < 0)
+	{
+		line << abs(delta) << " days ago";
+	}
+	else if (delta > 0)
+	{
+		line << "in " << delta << " days";
+	}
+	else
+	{
+		line << "today";
+	}
+	display(line.str());
+	newline();
+}
+
+
 
 int main(int argc, char* argv[])
 {
@@ -314,28 +335,14 @@ int main(int argc, char* argv[])
 	// if first argument is list
 	if (argv[1] == arg_list)
 	{
+		int count = 0;
 		// if only list argument, print all events
 		if (argc == 2)
 		{
 			for (auto& event : events)
 			{
 				const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
-				ostringstream line;
-				line << event << " - ";
-				if (delta < 0)
-				{
-					line << abs(delta) << " days ago";
-				}
-				else if (delta > 0)
-				{
-					line << "in " << delta << " days";
-				}
-				else
-				{
-					line << "today";
-				}
-				display(line.str());
-				newline();
+				print_day_format(delta, event);
 			}
 			return 0;
 		}
@@ -343,26 +350,15 @@ int main(int argc, char* argv[])
 		// if argument is today, print today's events
 		if (argv[2] == arg_today && argc == 3)
 		{
-			int count = 0;
 			for (auto& event : events)
 			{
 				const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
-				ostringstream line;
-				line << event << " - ";
 				if (delta == 0)
 				{
-					line << "today";
-					display(line.str());
-					newline();
+					print_day_format(delta, event);
 					count++;
 				}
 			}
-			// print nothing if no events today
-			if (count == 0)
-			{
-				cout << "No events today" << endl;
-			}
-			return 0;
 		}
 
 		// if argument is before-date, print events before given date
@@ -382,17 +378,13 @@ int main(int argc, char* argv[])
 			}
 			for (auto& event : events)
 			{
+				const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
 				// check if current date is before given date
 				if (event.getTimestamp() < date.value())
 				{
-					const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
-					ostringstream line;
-					line << event << " - ";
-					line << abs(delta) << " days ago";
-					display(line.str());
-					newline();
+					print_day_format(delta, event);
+					count++;
 				}
-
 			}
 			return 0;
 		}
@@ -420,14 +412,10 @@ int main(int argc, char* argv[])
 				if (event.getTimestamp() > date.value())
 				{
 					const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
-					ostringstream line;
-					line << event << " - ";
-					line << "in " << abs(delta) << " days";
-					display(line.str());
-					newline();
+					print_day_format(delta, event);
+					count++;
 				}
 			}
-			return 0;
 		}
 
 		// combine both before-date and after-date
@@ -454,45 +442,20 @@ int main(int argc, char* argv[])
 				return 0;
 			}
 
-			int count = 0;
 			for (auto& event : events)
 			{
-				const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
-				ostringstream line;
-				line << event << " - ";
-
 				if (event.getTimestamp() < before_date.value() || event.getTimestamp() > after_date.value())
 				{
-					if (delta < 0)
-					{
-						line << abs(delta) << " days ago";
-					}
-					else if (delta > 0)
-					{
-						line << "in " << delta << " days";
-					}
-					else
-					{
-						line << "today";
-					}
-					display(line.str());
-					newline();
+					const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
+					print_day_format(delta, event);
 					count++;
 				}
 			}
-
-			// print nothing if no events in given date range
-			if (count == 0)
-			{
-				cout << "No events found in the given date range" << endl;
-			}
-			return 0;
 		}
 
 		// if argument is just --date, print events on given date
 		if (argv[2] == arg_date && argc <= 4)
 		{
-			cout << "in date";
 			if (argc < 4)
 			{
 				cout << "No date given" << endl;
@@ -504,41 +467,16 @@ int main(int argc, char* argv[])
 				return 0;
 			}
 
-			int count = 0;
-
 			for (auto& event : events)
 			{
 				const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
-				ostringstream line;
-				line << event << " - ";
-
 				if (event.getTimestamp() == date)
 				{
-					if (delta < 0)
-					{
-						line << abs(delta) << " days ago";
-					}
-					else if (delta > 0)
-					{
-						line << "in " << delta << " days";
-					}
-					else
-					{
-						line << "today";
-					}
-					display(line.str());
-					newline();
+					print_day_format(delta, event);
 					count++;
 				}
 			}
-			// print nothing if no events on given date
-			if (count == 0)
-			{
-				cout << "No events found on the given date" << endl;
-			}
-			return 0;
 		}
-
 
 		// Categories!
 		if (argv[2] == arg_categories)
@@ -550,7 +488,7 @@ int main(int argc, char* argv[])
 			}
 
 			std::vector arg_categories = remove_commas(argv[3]);
-			int count = 0;
+
 			// Exclude events with given categories
 			bool exclude = false;
 			// Events with no category
@@ -560,32 +498,15 @@ int main(int argc, char* argv[])
 			{
 				exclude = true;
 			}
-			std::cout << "no category" << no_category << std::endl;
 
 			for (auto& event : events)
 			{
-				ostringstream line;
-				line << event << " - ";
-
 				if (exclude)
 				{
 					if (std::find(arg_categories.begin(), arg_categories.end(), event.getCategory()) == arg_categories.end())
 					{
 						const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
-						if (delta < 0)
-						{
-							line << abs(delta) << " days ago";
-						}
-						else if (delta > 0)
-						{
-							line << "in " << delta << " days";
-						}
-						else
-						{
-							line << "today";
-						}
-						display(line.str());
-						newline();
+						print_day_format(delta, event);
 						count++;
 					}
 				}
@@ -594,66 +515,32 @@ int main(int argc, char* argv[])
 					if (std::find(arg_categories.begin(), arg_categories.end(), event.getCategory()) != arg_categories.end())
 					{
 						const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
-						if (delta < 0)
-						{
-							line << abs(delta) << " days ago";
-						}
-						else if (delta > 0)
-						{
-							line << "in " << delta << " days";
-						}
-						else
-						{
-							line << "today";
-						}
-						display(line.str());
-						newline();
+						print_day_format(delta, event);
 						count++;
 					}
 				}
 			}
-
-			// print nothing if no events in given category
-			if (count == 0)
-			{
-				cout << "No events found in the given category" << endl;
-			}
-			return 0;
 		}
 
 		if (argc == 3 && argv[2] == arg_no_category)
 		{
-			int count = 0;
 			for (auto& event : events)
 			{
-				ostringstream line;
-				line << event << " - ";
 				if (event.getCategory() == "")
 				{
 					const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
-					if (delta < 0)
-					{
-						line << abs(delta) << " days ago";
-					}
-					else if (delta > 0)
-					{
-						line << "in " << delta << " days";
-					}
-					else
-					{
-						line << "today";
-					}
-					display(line.str());
-					newline();
+					print_day_format(delta, event);
 					count++;
 				}
 			}
-			if (count == 0)
-			{
-				cout << "No events found with no category" << endl;
-			}
-			return 0;
 		}
+
+		// print nothing if no events found
+		if (count == 0)
+		{
+			cout << "No events found" << endl;
+		}
+		return 0;
 	}
 
 	// ADDING EVENTS
