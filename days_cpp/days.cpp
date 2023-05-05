@@ -21,101 +21,8 @@
 
 #include "Event.h"	  // for our Event class
 #include "rapidcsv.h" // for the header-only library RapidCSV
+#include "Utilities.h"
 
-// Parses the string `buf` for a date in YYYY-MM-DD format. If `buf` can be parsed,
-// returns a wrapped `std::chrono::year_month_day` instances, otherwise `std::nullopt`.
-// NOTE: Once clang++ and g++ implement chrono::from_stream, this could be replaced by something like this:
-//  chrono::year_month_day birthdate;
-//  std::istringstream bds{birthdateValue};
-//  std::basic_istream<char> stream{bds.rdbuf()};
-//  chrono::from_stream(stream, "%F", birthdate);
-// However, I don't know how errors should be handled. Maybe this function could then
-// continue to serve as a wrapper.
-std::optional<std::chrono::year_month_day> getDateFromString(const std::string &buf)
-{
-	using namespace std; // use std facilities without prefix inside this function
-
-	constexpr string_view yyyymmdd = "YYYY-MM-DD";
-	if (buf.size() != yyyymmdd.size())
-	{
-		return nullopt;
-	}
-
-	istringstream input(buf);
-	string part;
-	vector<string> parts;
-	while (getline(input, part, '-'))
-	{
-		parts.push_back(part);
-	}
-	if (parts.size() != 3)
-	{ // expecting three components, year-month-day
-		return nullopt;
-	}
-
-	int year{0};
-	unsigned int month{0};
-	unsigned int day{0};
-	try
-	{
-		year = stoul(parts.at(0));
-		month = stoi(parts.at(1));
-		day = stoi(parts.at(2));
-
-		auto result = chrono::year_month_day{
-			chrono::year{year},
-			chrono::month(month),
-			chrono::day(day)};
-
-		if (result.ok())
-		{
-			return result;
-		}
-		else
-		{
-			return nullopt;
-		}
-	}
-	catch (invalid_argument const &ex)
-	{
-		cerr << "conversion error: " << ex.what() << endl;
-	}
-	catch (out_of_range const &ex)
-	{
-		cerr << "conversion error: " << ex.what() << endl;
-	}
-
-	return nullopt;
-}
-
-// Returns the value of the environment variable `name` as an `std::optional``
-// value. If the variable exists, the value is a wrapped `std::string`,
-// otherwise `std::nullopt`.
-std::optional<std::string> getEnvironmentVariable(const std::string &name)
-{
-	const char *value = std::getenv(const_cast<char *>(name.c_str()));
-	if (nullptr != value)
-	{
-		std::string valueString = value;
-		return valueString;
-	}
-	return std::nullopt;
-}
-
-// Returns `date` as a string in `YYYY-MM-DD` format.
-// The ostream support for `std::chrono::year_month_day` is not
-// available in most (any?) compilers, so we roll our own.
-std::string getStringFromDate(const std::chrono::year_month_day &date)
-{
-	std::ostringstream result;
-
-	result
-		<< std::setfill('0') << std::setw(4) << static_cast<int>(date.year())
-		<< "-" << std::setfill('0') << std::setw(2) << static_cast<unsigned>(date.month())
-		<< "-" << std::setfill('0') << std::setw(2) << static_cast<unsigned>(date.day());
-
-	return result.str();
-}
 
 // Print `T` to standard output.
 // `T` needs to have an overloaded << operator.
@@ -135,8 +42,9 @@ inline void newline()
 // See https://learn.microsoft.com/en-us/cpp/standard-library/overloading-the-output-operator-for-your-own-classes?view=msvc-170
 std::ostream &operator<<(std::ostream &os, const Event &event)
 {
+	Utilities tools;
 	os
-		<< getStringFromDate(event.getTimestamp()) << ": "
+		<< tools.getStringFromDate(event.getTimestamp()) << ": "
 		<< event.getDescription()
 		<< " (" + event.getCategory() + ")";
 	return os;
@@ -197,17 +105,17 @@ void print_day_format(int delta, auto event)
 int main(int argc, char* argv[])
 {
 	using namespace std;
-
+	Utilities tools;
 	// Get the current date from the system clock and extract year_month_day.
 	// See https://en.cppreference.com/w/cpp/chrono/year_month_day
 	const chrono::time_point now = chrono::system_clock::now();
 	const chrono::year_month_day currentDate{ chrono::floor<chrono::days>(now) };
 
 	// Check the birthdate and user with generic helper functions
-	auto birthdateValue = getEnvironmentVariable("BIRTHDATE");
+	auto birthdateValue = tools.getEnvironmentVariable("BIRTHDATE");
 	if (birthdateValue.has_value())
 	{
-		auto birthdate = getDateFromString(birthdateValue.value());
+		auto birthdate = tools.getDateFromString(birthdateValue.value());
 		ostringstream message;
 		if (birthdate.has_value())
 		{
@@ -215,7 +123,7 @@ int main(int argc, char* argv[])
 			if (b.month() == currentDate.month() && b.day() == currentDate.day())
 			{
 				message << "Happy birthday";
-				auto userEnv = getEnvironmentVariable("USER");
+				auto userEnv = tools.getEnvironmentVariable("USER");
 				if (userEnv.has_value())
 				{
 					auto user = userEnv.value();
@@ -246,11 +154,11 @@ int main(int argc, char* argv[])
 	// Construct a path for the events file.
 	// If the user's home directory can't be determined, give up.
 	string homeDirectoryString;
-	auto homeString = getEnvironmentVariable("HOME");
+	auto homeString = tools.getEnvironmentVariable("HOME");
 	if (!homeString.has_value())
 	{
 		// HOME not found, maybe this is Windows? Try USERPROFILE.
-		auto userProfileString = getEnvironmentVariable("USERPROFILE");
+		auto userProfileString = tools.getEnvironmentVariable("USERPROFILE");
 		if (!userProfileString.has_value())
 		{
 			std::cerr << "Unable to determine home directory";
@@ -297,7 +205,7 @@ int main(int argc, char* argv[])
 	vector<Event> events;
 	for (size_t i{ 0 }; i < dateStrings.size(); i++)
 	{
-		auto date = getDateFromString(dateStrings.at(i));
+		auto date = tools.getDateFromString(dateStrings.at(i));
 		if (!date.has_value())
 		{
 			cerr << "bad date at row " << i << ": " << dateStrings.at(i) << '\n';
@@ -370,7 +278,7 @@ int main(int argc, char* argv[])
 				cout << "No date given" << endl;
 				return 0;
 			}
-			auto date = getDateFromString(argv[3]);
+			auto date = tools.getDateFromString(argv[3]);
 			if (!date.has_value())
 			{
 				cerr << "bad date: " << argv[3] << '\n';
@@ -399,7 +307,7 @@ int main(int argc, char* argv[])
 				return 0;
 			}
 
-			auto date = getDateFromString(argv[3]);
+			auto date = tools.getDateFromString(argv[3]);
 			if (!date.has_value())
 			{
 				cerr << "bad date: " << argv[3] << '\n';
@@ -428,14 +336,14 @@ int main(int argc, char* argv[])
 				return 0;
 			}
 
-			auto before_date = getDateFromString(argv[3]);
+			auto before_date = tools.getDateFromString(argv[3]);
 			if (!before_date.has_value())
 			{
 				cerr << "bad date: " << argv[3] << '\n';
 				return 0;
 			}
 
-			auto after_date = getDateFromString(argv[5]);
+			auto after_date = tools.getDateFromString(argv[5]);
 			if (!after_date.has_value())
 			{
 				cerr << "bad date: " << argv[5] << '\n';
@@ -460,7 +368,7 @@ int main(int argc, char* argv[])
 			{
 				cout << "No date given" << endl;
 			}
-			auto date = getDateFromString(argv[3]);
+			auto date = tools.getDateFromString(argv[3]);
 			if (!date.has_value())
 			{
 				cerr << "bad date: " << argv[3] << '\n';
@@ -556,7 +464,7 @@ int main(int argc, char* argv[])
 			cout << "No date given" << endl;
 			return 0;
 		}
-		auto date = getDateFromString(argv[3]);
+		auto date = tools.getDateFromString(argv[3]);
 		if (!date.has_value())
 		{
 			cerr << "bad date: " << argv[3] << '\n';
