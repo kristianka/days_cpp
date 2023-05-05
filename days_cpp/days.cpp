@@ -173,14 +173,14 @@ std::vector<std::string> remove_commas(std::string args)
 }
 
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
 	using namespace std;
 
 	// Get the current date from the system clock and extract year_month_day.
 	// See https://en.cppreference.com/w/cpp/chrono/year_month_day
 	const chrono::time_point now = chrono::system_clock::now();
-	const chrono::year_month_day currentDate{chrono::floor<chrono::days>(now)};
+	const chrono::year_month_day currentDate{ chrono::floor<chrono::days>(now) };
 
 	// Check the birthdate and user with generic helper functions
 	auto birthdateValue = getEnvironmentVariable("BIRTHDATE");
@@ -204,8 +204,8 @@ int main(int argc, char *argv[])
 			}
 
 			int age = getNumberOfDaysBetween(
-				chrono::floor<chrono::days>(chrono::sys_days{b}),
-				chrono::floor<chrono::days>(chrono::sys_days{currentDate}));
+				chrono::floor<chrono::days>(chrono::sys_days{ b }),
+				chrono::floor<chrono::days>(chrono::sys_days{ currentDate }));
 
 			message << "You are " << age << " days old.";
 			if (age % 1000 == 0)
@@ -246,7 +246,7 @@ int main(int argc, char *argv[])
 	}
 
 	namespace fs = std::filesystem; // save a little typing
-	fs::path daysPath{homeDirectoryString};
+	fs::path daysPath{ homeDirectoryString };
 	daysPath /= ".days"; // append our own directory
 	if (!fs::exists(daysPath))
 	{
@@ -268,13 +268,13 @@ int main(int argc, char *argv[])
 	// Read in the CSV file from `eventsPath` using RapidCSV
 	// See https://github.com/d99kris/rapidcsv
 	//
-	rapidcsv::Document document{eventsPath.string()};
-	vector<string> dateStrings{document.GetColumn<string>("date")};
-	vector<string> categoryStrings{document.GetColumn<string>("category")};
-	vector<string> descriptionStrings{document.GetColumn<string>("description")};
+	rapidcsv::Document document{ eventsPath.string() };
+	vector<string> dateStrings{ document.GetColumn<string>("date") };
+	vector<string> categoryStrings{ document.GetColumn<string>("category") };
+	vector<string> descriptionStrings{ document.GetColumn<string>("description") };
 
 	vector<Event> events;
-	for (size_t i{0}; i < dateStrings.size(); i++)
+	for (size_t i{ 0 }; i < dateStrings.size(); i++)
 	{
 		auto date = getDateFromString(dateStrings.at(i));
 		if (!date.has_value())
@@ -286,46 +286,15 @@ int main(int argc, char *argv[])
 		Event event{
 			date.value(),
 			categoryStrings.at(i),
-			descriptionStrings.at(i)};
+			descriptionStrings.at(i) };
 		events.push_back(event);
 	}
 
 	const auto today = chrono::sys_days{
-		floor<chrono::days>(chrono::system_clock::now())};
-
-	// for (auto &event : events)
-	//{
-	//	const auto delta = (chrono::sys_days{event.getTimestamp()} - today).count();
-
-	//	ostringstream line;
-	//	line << event << " - ";
-
-	//	if (delta < 0)
-	//	{
-	//		line << abs(delta) << " days ago";
-	//	}
-	//	else if (delta > 0)
-	//	{
-	//		line << "in " << delta << " days";
-	//	}
-	//	else
-	//	{
-	//		line << "today";
-	//	}
-
-	//	display(line.str());
-	//	newline();
-	//}
-
+		floor<chrono::days>(chrono::system_clock::now()) };
 
 
 	// NEW CODE
-
-	if (argc == 1)
-	{
-		cout << "No arguments given" << endl;
-		return 0;
-	}
 
 	string arg_list = "list";
 	string arg_today = "--today";
@@ -333,6 +302,14 @@ int main(int argc, char *argv[])
 	string arg_after = "--after-date";
 	string arg_date = "--date";
 	string arg_categories = "--categories";
+	string arg_exclude = "--exclude";
+	string arg_no_category = "--no-category";
+
+	if (argc == 1)
+	{
+		cout << "No arguments given" << endl;
+		return 0;
+	}
 
 	// if first argument is list
 	if (argv[1] == arg_list)
@@ -342,7 +319,7 @@ int main(int argc, char *argv[])
 		{
 			for (auto& event : events)
 			{
-				const auto delta = (chrono::sys_days{event.getTimestamp()} - today).count();
+				const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
 				ostringstream line;
 				line << event << " - ";
 				if (delta < 0)
@@ -369,7 +346,7 @@ int main(int argc, char *argv[])
 			int count = 0;
 			for (auto& event : events)
 			{
-				const auto delta = (chrono::sys_days{event.getTimestamp()} - today).count();
+				const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
 				ostringstream line;
 				line << event << " - ";
 				if (delta == 0)
@@ -391,7 +368,6 @@ int main(int argc, char *argv[])
 		// if argument is before-date, print events before given date
 		if (argv[2] == arg_before && argc <= 4)
 		{
-
 			// check if date is given
 			if (argc == 3)
 			{
@@ -414,10 +390,10 @@ int main(int argc, char *argv[])
 					line << event << " - ";
 					line << abs(delta) << " days ago";
 					display(line.str());
-					newline();	
+					newline();
 				}
 
-			}		
+			}
 			return 0;
 		}
 
@@ -448,14 +424,14 @@ int main(int argc, char *argv[])
 					line << event << " - ";
 					line << "in " << abs(delta) << " days";
 					display(line.str());
-					newline();	
+					newline();
 				}
-			}		
+			}
 			return 0;
 		}
 
 		// combine both before-date and after-date
-		if (argv[2] == arg_before && argv[4] == arg_after && argc <=6)
+		if (argv[2] == arg_before && argv[4] == arg_after && argc <= 6)
 		{
 			// check if date is given
 			if (argc != 6)
@@ -481,7 +457,7 @@ int main(int argc, char *argv[])
 			int count = 0;
 			for (auto& event : events)
 			{
-				const auto delta = (chrono::sys_days{event.getTimestamp()} - today).count();
+				const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
 				ostringstream line;
 				line << event << " - ";
 
@@ -514,7 +490,7 @@ int main(int argc, char *argv[])
 		}
 
 		// if argument is just --date, print events on given date
-		if (argv[2] == arg_date && argc <=4)
+		if (argv[2] == arg_date && argc <= 4)
 		{
 			cout << "in date";
 			if (argc < 4)
@@ -575,14 +551,86 @@ int main(int argc, char *argv[])
 
 			std::vector arg_categories = remove_commas(argv[3]);
 			int count = 0;
+			// Exclude events with given categories
+			bool exclude = false;
+			// Events with no category
+			bool no_category = false;
+
+			if (argc > 4 && argv[4] == arg_exclude)
+			{
+				exclude = true;
+			}
+			std::cout << "no category" << no_category << std::endl;
 
 			for (auto& event : events)
 			{
-				if (std::find(arg_categories.begin(), arg_categories.end(), event.getCategory()) != arg_categories.end())
+				ostringstream line;
+				line << event << " - ";
+
+				if (exclude)
+				{
+					if (std::find(arg_categories.begin(), arg_categories.end(), event.getCategory()) == arg_categories.end())
+					{
+						const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
+						if (delta < 0)
+						{
+							line << abs(delta) << " days ago";
+						}
+						else if (delta > 0)
+						{
+							line << "in " << delta << " days";
+						}
+						else
+						{
+							line << "today";
+						}
+						display(line.str());
+						newline();
+						count++;
+					}
+				}
+				else
+				{
+					if (std::find(arg_categories.begin(), arg_categories.end(), event.getCategory()) != arg_categories.end())
+					{
+						const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
+						if (delta < 0)
+						{
+							line << abs(delta) << " days ago";
+						}
+						else if (delta > 0)
+						{
+							line << "in " << delta << " days";
+						}
+						else
+						{
+							line << "today";
+						}
+						display(line.str());
+						newline();
+						count++;
+					}
+				}
+			}
+
+			// print nothing if no events in given category
+			if (count == 0)
+			{
+				cout << "No events found in the given category" << endl;
+			}
+			return 0;
+		}
+
+		if (argc == 3 && argv[2] == arg_no_category)
+		{
+			int count = 0;
+			for (auto& event : events)
+			{
+				ostringstream line;
+				line << event << " - ";
+				if (event.getCategory() == "")
 				{
 					const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
-					ostringstream line;
-					line << event << " - ";
 					if (delta < 0)
 					{
 						line << abs(delta) << " days ago";
@@ -600,18 +648,63 @@ int main(int argc, char *argv[])
 					count++;
 				}
 			}
-			// print nothing if no events in given category
 			if (count == 0)
 			{
-				cout << "No events found in the given category" << endl;
+				cout << "No events found with no category" << endl;
 			}
 			return 0;
 		}
+	}
 
+	// ADDING EVENTS
+	string arg_add = "add";
+	string arg_category = "--category";
+	string arg_description = "--description";
 
+	if (argv[1] == arg_add)
+	{
+		cout << "in add" << endl;
+		if (argc < 3)
+		{
+			cout << "No date given" << endl;
+			return 0;
+		}
+		auto date = getDateFromString(argv[3]);
+		if (!date.has_value())
+		{
+			cerr << "bad date: " << argv[3] << '\n';
+			return 0;
+		}
+		string category = "";
+		string description = "";
+
+		for (int i = 4; i < argc; i++)
+		{
+			if (argv[i] == arg_category)
+			{
+				category = argv[i + 1];
+			}
+			if (argv[i] == arg_description)
+			{
+				description = argv[i + 1];
+			}
+		}
+
+		Event event(date.value(), category, description);
+		std::cout << event << std::endl;
+		events.push_back(event);
+
+		// Write to events.csv in events path
+		ofstream file;
+		std::cout << eventsPath << std::endl;
+		file.open(eventsPath, ios::app);
+		file << event << endl;
+
+		file.close();
 
 		return 0;
 	}
+
 
 	return 0;
 }
