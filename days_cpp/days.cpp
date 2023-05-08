@@ -112,46 +112,6 @@ int main(int argc, char* argv[])
 	const chrono::time_point now = chrono::system_clock::now();
 	const chrono::year_month_day currentDate{ chrono::floor<chrono::days>(now) };
 
-	// Check the birthdate and user with generic helper functions
-	auto birthdateValue = tools.getEnvironmentVariable("BIRTHDATE");
-	if (birthdateValue.has_value())
-	{
-		auto birthdate = tools.getDateFromString(birthdateValue.value());
-		ostringstream message;
-		if (birthdate.has_value())
-		{
-			auto b = birthdate.value();
-			if (b.month() == currentDate.month() && b.day() == currentDate.day())
-			{
-				message << "Happy birthday";
-				auto userEnv = tools.getEnvironmentVariable("USER");
-				if (userEnv.has_value())
-				{
-					auto user = userEnv.value();
-					message << ", " << user;
-				}
-				message << "! ";
-			}
-
-			int age = getNumberOfDaysBetween(
-				chrono::floor<chrono::days>(chrono::sys_days{ b }),
-				chrono::floor<chrono::days>(chrono::sys_days{ currentDate }));
-
-			message << "You are " << age << " days old.";
-			if (age % 1000 == 0)
-			{
-				message << " That's a nice round number!";
-			}
-
-			display(message.str());
-			newline();
-		}
-	}
-
-	// Note that you can't print an `std::chrono::year_month_day`
-	// with `display()` because there is no overloaded << operator
-	// for it (yet).
-
 	// Construct a path for the events file.
 	// If the user's home directory can't be determined, give up.
 	string homeDirectoryString;
@@ -178,6 +138,7 @@ int main(int argc, char* argv[])
 	namespace fs = std::filesystem; // save a little typing
 	fs::path daysPath{ homeDirectoryString };
 	daysPath /= ".days"; // append our own directory
+
 	if (!fs::exists(daysPath))
 	{
 		display(daysPath.string());
@@ -193,7 +154,7 @@ int main(int argc, char* argv[])
 	// Now we should have a valid path to the `~/.days` directory.
 	// Construct a pathname for the `events.csv` file.
 	auto eventsPath = daysPath / "events.csv";
-
+	auto tempPath = daysPath / "events.csv.tmp";
 
 	//
 	// Read in the CSV file from `eventsPath` using RapidCSV
@@ -236,6 +197,8 @@ int main(int argc, char* argv[])
 	string arg_exclude = "--exclude";
 	string arg_no_category = "--no-category";
 
+	int count = 0;
+
 	if (argc == 1)
 	{
 		cout << "No arguments given" << endl;
@@ -245,7 +208,6 @@ int main(int argc, char* argv[])
 	// if first argument is list
 	if (argv[1] == arg_list)
 	{
-		int count = 0;
 		// if only list argument, print all events
 		if (argc == 2)
 		{
@@ -444,13 +406,6 @@ int main(int argc, char* argv[])
 				}
 			}
 		}
-
-		// print nothing if no events found
-		if (count == 0)
-		{
-			cout << "No events found" << endl;
-		}
-		return 0;
 	}
 
 	// ADDING EVENTS
@@ -557,7 +512,6 @@ int main(int argc, char* argv[])
 		}
 
 		int length = argc - 1;
-		int countt = 0;
 
 		if (argv[2] == arg_description)
 		{
@@ -566,19 +520,42 @@ int main(int argc, char* argv[])
 				if (event.getDescription() == argv[3] && argv[length] == arg_dry_run)
 				{
 					cout <<  event << " would have been deleted without dry run" << endl;
-					countt++;
+					count++;
 				}
 
+				// This functions works by copying the events.csv file to a events.csv.tmp file,
+				// then deleting the events.csv file and renaming the temp file to events.csv!
 				if (event.getDescription() == argv[3] && argv[length] != arg_dry_run)
 				{
-					// ADD CODE TO REMOVE FROM CSV FILE
 					try
 					{
-						
+						string deleteline = argv[3];
+						string line;
+						string newline;
 
+						// events file
+						ifstream fin;
+						fin.open(eventsPath.string());
+
+						// temp file
+						ofstream temp;
+						temp.open(tempPath.string());
+
+						while (getline(fin, line)) {
+							if (line.find(deleteline) == std::string::npos) {
+								temp << line << "\n";
+							}
+						}
+
+						temp.close();
+						fin.close();
+
+						// delete events file and rename temp file to events file
+						fs::remove(eventsPath.string().c_str());
+						fs::rename(tempPath.string().c_str(), eventsPath.string().c_str());
 
 						cout << "Deleted event " << event << endl;
-						countt++;
+						count++;
 					}
 					catch (const std::exception&)
 					{
@@ -586,11 +563,6 @@ int main(int argc, char* argv[])
 					}
 				}
 			}
-		}
-
-		if (countt == 0)
-		{
-			cout << "No events found" << endl;
 		}
 
 		if (argv[2] == arg_all)
@@ -601,7 +573,6 @@ int main(int argc, char* argv[])
 				{
 					cout << event << endl;
 				}
-				return 0;
 			} 
 			else
 			{
@@ -614,8 +585,10 @@ int main(int argc, char* argv[])
 
 	}
 
-
-
+	if (count == 0)
+	{
+		cout << "No events found" << endl;
+	}
 
 	return 0;
 }
