@@ -530,6 +530,7 @@ int main(int argc, char* argv[])
 			file << event_formatted << endl;
 			file.close();
 			std::cout << "Successfully added event " << event << std::endl;
+			count++;
 		}
 		catch (const std::exception&)
 		{
