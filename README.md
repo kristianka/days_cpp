@@ -16,7 +16,7 @@ Course project for Ohjelmoinnin syventävät teknologiat -course. Original code 
 - Run the program, for example ```./days list``` will list all the events.
 
 ### On Windows: 
-- Open ```Developer Command Prompt for VS 2022``` and run this command: ```cl /std:c++20 /EHsc days.cpp Event.cpp Utilities.cpp```
+- Open ```Developer Command Prompt for VS 2022```, go to the cloned directory that has the ```.cpp``` files and run this command: ```cl /std:c++20 /EHsc days.cpp Event.cpp Utilities.cpp```
 
 - Run the program, for example ```.\days.exe list``` or ```days.exe list```  will list all the events.
 
