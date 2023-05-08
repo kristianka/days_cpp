@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <fstream>
 
 #include "Event.h"	  // for our Event class
 #include "rapidcsv.h" // for the header-only library RapidCSV
@@ -458,47 +459,133 @@ int main(int argc, char* argv[])
 
 	if (argv[1] == arg_add)
 	{
-		cout << "in add" << endl;
+		bool date_given = true;
+		// check if enough arguments
 		if (argc < 3)
 		{
-			cout << "No date given" << endl;
+			cout << "No date given or wrong formatting" << endl;
 			return 0;
 		}
+
 		auto date = tools.getDateFromString(argv[3]);
-		if (!date.has_value())
+
+		if (argv[2] != arg_date && argc > 5)
+		{
+			date = today;
+			date_given = false;
+		}
+
+		if (date_given == true && !date.has_value())
 		{
 			cerr << "bad date: " << argv[3] << '\n';
 			return 0;
 		}
+
 		string category = "";
 		string description = "";
 
-		for (int i = 4; i < argc; i++)
+		if (date_given)
 		{
-			if (argv[i] == arg_category)
+			for (int i = 4; i < argc; i++)
 			{
-				category = argv[i + 1];
+				if (argv[i] == arg_category)
+				{
+					category = argv[i + 1];
+				}
+				if (argv[i] == arg_description)
+				{
+					description = argv[i + 1];
+				}
 			}
-			if (argv[i] == arg_description)
+		}
+		if (!date_given)
+		{
+			for (int i = 2; i < argc; i++)
 			{
-				description = argv[i + 1];
+				if (argv[i] == arg_category)
+				{
+					category = argv[i + 1];
+				}
+				if (argv[i] == arg_description)
+				{
+					description = argv[i + 1];
+				}
 			}
 		}
 
+		// Push to event vector, not really necessary since the program will end after this
 		Event event(date.value(), category, description);
-		std::cout << event << std::endl;
 		events.push_back(event);
 
+		// Build string that has formatted event for the .csv file
+		std::stringstream ss;
+		ss << event.getTimestamp() << "," << event.getCategory() << "," << event.getDescription();
+		std::string event_formatted = ss.str(); // get the string from the stringstream
+
+		cout << event_formatted << endl;
+
 		// Write to events.csv in events path
-		ofstream file;
-		std::cout << eventsPath << std::endl;
-		file.open(eventsPath, ios::app);
-		file << event << endl;
-
-		file.close();
-
-		return 0;
+		try
+		{
+			ofstream file;
+			std::cout << eventsPath.string() << std::endl;
+			file.open(eventsPath.string(), std::ios::out | std::ios::app);
+			file << event_formatted << endl;
+			file.close();
+			std::cout << "Successfully added event " << event << std::endl;
+		}
+		catch (const std::exception&)
+		{
+			std::cout << "Error opening file" << std::endl;
+		}
+		
 	}
+
+	// REMOVING EVENTS
+
+	string arg_delete = "delete";
+	string arg_all = "--all";
+	string arg_dry_run = "--dry-run";
+
+	if (argv[1] == arg_delete)
+	{
+		if (argc < 3)
+		{
+			cout << "No date given or wrong formatting" << endl;
+			return 0;
+		}
+
+		if (argv[2] == arg_description)
+		{
+			for (auto& event : events)
+			{
+
+			}
+		}
+
+
+		if (argv[2] == arg_all)
+		{
+			if (argv[3] == arg_dry_run)
+			{
+				for (auto& event : events)
+				{
+					cout << event << endl;
+				}
+				return 0;
+			} 
+			else
+			{
+				events.clear();
+
+				cout << "Deleted all events" << endl;
+			}
+		}
+
+
+	}
+
+
 
 
 	return 0;
