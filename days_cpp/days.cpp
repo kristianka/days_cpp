@@ -101,6 +101,48 @@ void print_day_format(int delta, auto event)
 	newline();
 }
 
+// This functions works by copying the events.csv file to a events.csv.tmp file,
+// then deleting the events.csv file and renaming the temp file to events.csv!
+void update_csv_file(auto& eventsPath, auto& tempPath, char *argv[], auto& event)
+{
+	try {
+		using namespace std;
+		namespace fs = std::filesystem; // save a little typing
+
+		string deleteline = argv[3];
+		string line;
+		string newline;
+
+		// events file
+		ifstream fin;
+		fin.open(eventsPath.string());
+
+		// temp file
+		ofstream temp;
+		temp.open(tempPath.string());
+
+		while (getline(fin, line)) {
+			if (line.find(deleteline) == std::string::npos) {
+				temp << line << "\n";
+			}
+		}
+
+		temp.close();
+		fin.close();
+
+		// delete events file and rename temp file to events file
+		fs::remove(eventsPath.string().c_str());
+		fs::rename(tempPath.string().c_str(), eventsPath.string().c_str());
+
+		cout << "Deleted event " << event << endl;
+	}
+	catch (const std::exception&)
+	{
+		std::cout << "An error occured while writing to file." << std::endl;
+	}
+
+}
+
 
 
 int main(int argc, char* argv[])
@@ -412,6 +454,8 @@ int main(int argc, char* argv[])
 	string arg_add = "add";
 	string arg_category = "--category";
 	string arg_description = "--description";
+	string category = "";
+	string description = "";
 
 	if (argv[1] == arg_add)
 	{
@@ -436,9 +480,6 @@ int main(int argc, char* argv[])
 			cerr << "bad date: " << argv[3] << '\n';
 			return 0;
 		}
-
-		string category = "";
-		string description = "";
 
 		if (date_given)
 		{
@@ -523,46 +564,81 @@ int main(int argc, char* argv[])
 					count++;
 				}
 
-				// This functions works by copying the events.csv file to a events.csv.tmp file,
-				// then deleting the events.csv file and renaming the temp file to events.csv!
 				if (event.getDescription() == argv[3] && argv[length] != arg_dry_run)
 				{
-					try
+					update_csv_file(eventsPath, tempPath, argv, event);
+					count++;
+				}
+			}
+		}
+
+		if (argv[2] == arg_date)
+		{
+			auto date = tools.getDateFromString(argv[3]);
+
+			if (!date.has_value())	
+			{
+				cerr << "bad date: " << argv[3] << '\n';
+				return 0;
+			}
+
+			bool has_category = false;
+
+			if (argc > 5)
+			{
+				if (argv[4] == arg_category)
+				{
+					has_category = true;
+				}
+			}
+
+			if (has_category)
+			{
+				for (int i = 2; i < argc; i++)
+				{
+					if (argv[i] == arg_category)
 					{
-						string deleteline = argv[3];
-						string line;
-						string newline;
-
-						// events file
-						ifstream fin;
-						fin.open(eventsPath.string());
-
-						// temp file
-						ofstream temp;
-						temp.open(tempPath.string());
-
-						while (getline(fin, line)) {
-							if (line.find(deleteline) == std::string::npos) {
-								temp << line << "\n";
-							}
-						}
-
-						temp.close();
-						fin.close();
-
-						// delete events file and rename temp file to events file
-						fs::remove(eventsPath.string().c_str());
-						fs::rename(tempPath.string().c_str(), eventsPath.string().c_str());
-
-						cout << "Deleted event " << event << endl;
-						count++;
+						category = argv[i + 1];
 					}
-					catch (const std::exception&)
+					if (argv[i] == arg_description)
 					{
-
+						description = argv[i + 1];
 					}
 				}
 			}
+
+			for (auto& event : events)
+			{
+				if (has_category)
+				{
+					if (event.getTimestamp() == date.value() && event.getCategory() == category && argv[length] == arg_dry_run)
+					{
+						cout << event << " would have been deleted without dry run" << endl;
+						count++;
+					}
+
+					if (event.getTimestamp() == date.value() && event.getCategory() == category && argv[length] != arg_dry_run)
+					{
+						update_csv_file(eventsPath, tempPath, argv, event);
+						count++;
+					}
+				}
+
+				if (!has_category)
+				{
+					if (event.getTimestamp() == date.value() && argv[length] == arg_dry_run)
+					{
+						cout << event << " would have been deleted without dry run" << endl;
+						count++;
+					}
+
+					if (event.getTimestamp() == date.value() && argv[length] != arg_dry_run)
+					{
+						update_csv_file(eventsPath, tempPath, argv, event);
+						count++;
+					}
+				}
+			}	
 		}
 
 		if (argv[2] == arg_all)
@@ -581,8 +657,6 @@ int main(int argc, char* argv[])
 				cout << "Deleted all events" << endl;
 			}
 		}
-
-
 	}
 
 	if (count == 0)
