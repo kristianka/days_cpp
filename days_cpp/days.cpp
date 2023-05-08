@@ -140,7 +140,6 @@ void update_csv_file(auto& eventsPath, auto& tempPath, char *argv[], auto& event
 	{
 		std::cout << "An error occured while writing to file." << std::endl;
 	}
-
 }
 
 
@@ -257,6 +256,7 @@ int main(int argc, char* argv[])
 			{
 				const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
 				print_day_format(delta, event);
+				count++;
 			}
 			return 0;
 		}
@@ -643,18 +643,30 @@ int main(int argc, char* argv[])
 
 		if (argv[2] == arg_all)
 		{
-			if (argv[3] == arg_dry_run)
+
+			if (argc > 3 && argv[3] == arg_dry_run)
 			{
 				for (auto& event : events)
 				{
-					cout << event << endl;
+					cout << event << " would have been deleted without dry run" << endl;
+					count++;
 				}
 			} 
-			else
-			{
-				events.clear();
 
-				cout << "Deleted all events" << endl;
+			if (argc == 3)
+			{
+				try
+				{
+					std::ofstream ofs;
+					ofs.open(eventsPath.string(), std::ofstream::out | std::ofstream::trunc);
+					ofs.close();
+					cout << "Deleted all events" << endl;
+					count++;
+				}
+				catch (const std::exception&)
+				{
+					std::cout << "Error opening file" << std::endl;
+				}
 			}
 		}
 	}
