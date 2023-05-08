@@ -194,6 +194,7 @@ int main(int argc, char* argv[])
 	// Construct a pathname for the `events.csv` file.
 	auto eventsPath = daysPath / "events.csv";
 
+
 	//
 	// Read in the CSV file from `eventsPath` using RapidCSV
 	// See https://github.com/d99kris/rapidcsv
@@ -555,14 +556,42 @@ int main(int argc, char* argv[])
 			return 0;
 		}
 
+		int length = argc - 1;
+		int countt = 0;
+
 		if (argv[2] == arg_description)
 		{
 			for (auto& event : events)
 			{
+				if (event.getDescription() == argv[3] && argv[length] == arg_dry_run)
+				{
+					cout <<  event << " would have been deleted without dry run" << endl;
+					countt++;
+				}
 
+				if (event.getDescription() == argv[3] && argv[length] != arg_dry_run)
+				{
+					// ADD CODE TO REMOVE FROM CSV FILE
+					try
+					{
+						
+
+
+						cout << "Deleted event " << event << endl;
+						countt++;
+					}
+					catch (const std::exception&)
+					{
+
+					}
+				}
 			}
 		}
 
+		if (countt == 0)
+		{
+			cout << "No events found" << endl;
+		}
 
 		if (argv[2] == arg_all)
 		{
