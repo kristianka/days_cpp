@@ -142,8 +142,6 @@ void update_csv_file(auto& eventsPath, auto& tempPath, char *argv[], auto& event
 	}
 }
 
-
-
 int main(int argc, char* argv[])
 {
 	using namespace std;
@@ -227,8 +225,7 @@ int main(int argc, char* argv[])
 		floor<chrono::days>(chrono::system_clock::now()) };
 
 
-	// NEW CODE
-
+	// Command line arguments
 	string arg_list = "list";
 	string arg_today = "--today";
 	string arg_before = "--before-date";
@@ -238,8 +235,10 @@ int main(int argc, char* argv[])
 	string arg_exclude = "--exclude";
 	string arg_no_category = "--no-category";
 
+	// Counter for printing not found
 	int count = 0;
 
+	// If only command is days, show error
 	if (argc == 1)
 	{
 		cout << "No arguments given" << endl;
@@ -261,7 +260,7 @@ int main(int argc, char* argv[])
 			return 0;
 		}
 
-		// if argument is today, print today's events
+		// if argument after list is today, print today's events
 		if (argv[2] == arg_today && argc == 3)
 		{
 			for (auto& event : events)
@@ -275,7 +274,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		// if argument is before-date, print events before given date
+		// if argument afrer list is --before-date, print events before given date
 		if (argv[2] == arg_before && argc <= 4)
 		{
 			// check if date is given
@@ -284,12 +283,9 @@ int main(int argc, char* argv[])
 				cout << "No date given" << endl;
 				return 0;
 			}
-			auto date = tools.getDateFromString(argv[3]);
-			if (!date.has_value())
-			{
-				cerr << "bad date: " << argv[3] << '\n';
-				return 0;
-			}
+
+			auto date = tools.validate_date(argv,3);
+
 			for (auto& event : events)
 			{
 				const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
@@ -303,7 +299,7 @@ int main(int argc, char* argv[])
 			return 0;
 		}
 
-		// if argument is after-date, print events after given date
+		// if argument after list is --after-date, print events after given date
 		if (argv[2] == arg_after && argc <= 4)
 		{
 			// check if date is given
@@ -313,12 +309,7 @@ int main(int argc, char* argv[])
 				return 0;
 			}
 
-			auto date = tools.getDateFromString(argv[3]);
-			if (!date.has_value())
-			{
-				cerr << "bad date: " << argv[3] << '\n';
-				return 0;
-			}
+			auto date = tools.validate_date(argv, 3);
 
 			for (auto& event : events)
 			{
@@ -332,7 +323,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		// combine both before-date and after-date
+		// combine both-- before-date and --after-date
 		if (argv[2] == arg_before && argv[4] == arg_after && argc <= 6)
 		{
 			// check if date is given
@@ -342,19 +333,8 @@ int main(int argc, char* argv[])
 				return 0;
 			}
 
-			auto before_date = tools.getDateFromString(argv[3]);
-			if (!before_date.has_value())
-			{
-				cerr << "bad date: " << argv[3] << '\n';
-				return 0;
-			}
-
-			auto after_date = tools.getDateFromString(argv[5]);
-			if (!after_date.has_value())
-			{
-				cerr << "bad date: " << argv[5] << '\n';
-				return 0;
-			}
+			auto before_date = tools.validate_date(argv, 3);
+			auto after_date = tools.validate_date(argv, 5);
 
 			for (auto& event : events)
 			{
@@ -367,19 +347,15 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		// if argument is just --date, print events on given date
+		// if argument after list is --date, print events on given date
 		if (argv[2] == arg_date && argc <= 4)
 		{
 			if (argc < 4)
 			{
 				cout << "No date given" << endl;
 			}
-			auto date = tools.getDateFromString(argv[3]);
-			if (!date.has_value())
-			{
-				cerr << "bad date: " << argv[3] << '\n';
-				return 0;
-			}
+
+			auto date = tools.validate_date(argv, 3);
 
 			for (auto& event : events)
 			{
@@ -392,7 +368,8 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		// Categories!
+		// Categories
+		// if argument after list is --categories
 		if (argv[2] == arg_categories)
 		{
 			if (argc < 4)
@@ -401,22 +378,19 @@ int main(int argc, char* argv[])
 				return 0;
 			}
 
+			// Put categories to vector and remove commas
 			std::vector arg_categories = remove_commas(argv[3]);
 
-			// Exclude events with given categories
-			bool exclude = false;
+			// Exclude events with given categories, check if --exclude is given
+			bool exclude = exclude = (argc > 4 && argv[4] == arg_exclude);
 			// Events with no category
 			bool no_category = false;
-
-			if (argc > 4 && argv[4] == arg_exclude)
-			{
-				exclude = true;
-			}
 
 			for (auto& event : events)
 			{
 				if (exclude)
 				{
+					// If the event category is not in the arg_categories vector, then print it
 					if (std::find(arg_categories.begin(), arg_categories.end(), event.getCategory()) == arg_categories.end())
 					{
 						const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
@@ -426,6 +400,7 @@ int main(int argc, char* argv[])
 				}
 				else
 				{
+					// If the event category is in the arg_categories vector, then print it
 					if (std::find(arg_categories.begin(), arg_categories.end(), event.getCategory()) != arg_categories.end())
 					{
 						const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
@@ -436,6 +411,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
+		// if argument after list is --no-category
 		if (argc == 3 && argv[2] == arg_no_category)
 		{
 			for (auto& event : events)
@@ -450,13 +426,14 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	// ADDING EVENTS
+	// Arguments for adding events
 	string arg_add = "add";
 	string arg_category = "--category";
 	string arg_description = "--description";
 	string category = "";
 	string description = "";
 
+	// if argument after days is --add
 	if (argv[1] == arg_add)
 	{
 		bool date_given = true;
@@ -467,20 +444,24 @@ int main(int argc, char* argv[])
 			return 0;
 		}
 
-		auto date = tools.getDateFromString(argv[3]);
+		auto date = tools.validate_date(argv, 3);
 
-		if (argv[2] != arg_date && argc > 5)
+		// if no date given, use today
+		if (argv[2] != arg_date)
 		{
 			date = today;
 			date_given = false;
 		}
 
+		// check if date is valid
 		if (date_given == true && !date.has_value())
 		{
 			cerr << "bad date: " << argv[3] << '\n';
 			return 0;
 		}
 
+		// Add category and description, different loops
+		// depending on if date is given or not
 		if (date_given)
 		{
 			for (int i = 4; i < argc; i++)
@@ -519,8 +500,6 @@ int main(int argc, char* argv[])
 		ss << event.getTimestamp() << "," << event.getCategory() << "," << event.getDescription();
 		std::string event_formatted = ss.str(); // get the string from the stringstream
 
-		cout << event_formatted << endl;
-
 		// Write to events.csv in events path
 		try
 		{
@@ -539,12 +518,12 @@ int main(int argc, char* argv[])
 		
 	}
 
-	// REMOVING EVENTS
-
+	// Arguments for deleting events
 	string arg_delete = "delete";
 	string arg_all = "--all";
 	string arg_dry_run = "--dry-run";
 
+	// If delete is given as first argument after days
 	if (argv[1] == arg_delete)
 	{
 		if (argc < 3)
@@ -555,17 +534,19 @@ int main(int argc, char* argv[])
 
 		int length = argc - 1;
 
+		// If --description is given as first argument after delete
 		if (argv[2] == arg_description)
 		{
 			for (auto& event : events)
 			{
-				if (event.getDescription() == argv[3] && argv[length] == arg_dry_run)
+
+				if (event.getDescription().starts_with(argv[3]) && argv[length] == arg_dry_run)
 				{
 					cout <<  event << " would have been deleted without dry run" << endl;
 					count++;
 				}
 
-				if (event.getDescription() == argv[3] && argv[length] != arg_dry_run)
+				if (event.getDescription().starts_with(argv[3]) && argv[length] != arg_dry_run)
 				{
 					update_csv_file(eventsPath, tempPath, argv, event);
 					count++;
@@ -573,25 +554,14 @@ int main(int argc, char* argv[])
 			}
 		}
 
+		// If --date is given as first argument after delete
 		if (argv[2] == arg_date)
 		{
-			auto date = tools.getDateFromString(argv[3]);
-
-			if (!date.has_value())	
-			{
-				cerr << "bad date: " << argv[3] << '\n';
-				return 0;
-			}
-
-			bool has_category = false;
-
-			if (argc > 5)
-			{
-				if (argv[4] == arg_category)
-				{
-					has_category = true;
-				}
-			}
+			auto date = tools.validate_date(argv, 3);
+		
+			// Check if arguments have --category and --description
+			bool has_category = (argc > 5 && argv[4] == arg_category);
+			bool has_description = (argc > 6 && argv[6] == arg_description);
 
 			if (has_category)
 			{
@@ -610,21 +580,48 @@ int main(int argc, char* argv[])
 
 			for (auto& event : events)
 			{
+				// If category is given, find events with given date and category
 				if (has_category)
 				{
-					if (event.getTimestamp() == date.value() && event.getCategory() == category && argv[length] == arg_dry_run)
+					// If description is not given, find events with given date and category
+					if (!has_description)
 					{
-						cout << event << " would have been deleted without dry run" << endl;
-						count++;
-					}
+						// Find events with given date and category. If --dry-run is given, print out the events that would have been deleted
+						if (event.getTimestamp() == date.value() && event.getCategory() == category && argv[length] == arg_dry_run)
+						{
+							cout << event << " would have been deleted without dry run" << endl;
+							count++;
+						}
 
-					if (event.getTimestamp() == date.value() && event.getCategory() == category && argv[length] != arg_dry_run)
+						// If --dry-run is not given, update the csv file
+						if (event.getTimestamp() == date.value() && event.getCategory() == category && argv[length] != arg_dry_run)
+						{
+							update_csv_file(eventsPath, tempPath, argv, event);
+							count++;
+						}
+					}
+					// If description is given, find events with given date, category and description
+					if (has_description)
 					{
-						update_csv_file(eventsPath, tempPath, argv, event);
-						count++;
+						// Same as above, but also checks if event description starts with given description
+						if (event.getTimestamp() == date.value() && event.getCategory() == category &&
+							event.getDescription().starts_with(description) && argv[length] == arg_dry_run)
+						{
+							cout << event << " would have been deleted without dry run" << endl;
+							count++;
+						}
+
+						// If --dry-run is not given, update the csv file
+						if (event.getTimestamp() == date.value() && event.getCategory() == category &&
+							event.getDescription().starts_with(description) && argv[length] != arg_dry_run)
+						{
+							update_csv_file(eventsPath, tempPath, argv, event);
+							count++;
+						}
 					}
 				}
 
+				// If category is not given, find events just with given date
 				if (!has_category)
 				{
 					if (event.getTimestamp() == date.value() && argv[length] == arg_dry_run)
@@ -642,9 +639,10 @@ int main(int argc, char* argv[])
 			}	
 		}
 
+		// If --all is given as argument after delete
 		if (argv[2] == arg_all)
 		{
-
+			// If --dry-run is given, just print what would have been deleted
 			if (argc > 3 && argv[3] == arg_dry_run)
 			{
 				for (auto& event : events)
@@ -654,8 +652,10 @@ int main(int argc, char* argv[])
 				}
 			} 
 
+			// If --dry-run is not given, delete all events
 			if (argc == 3)
 			{
+				// Empty events.csv
 				try
 				{
 					std::ofstream ofs;
@@ -672,6 +672,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	// If no events were printed, print this
 	if (count == 0)
 	{
 		cout << "No events found" << endl;

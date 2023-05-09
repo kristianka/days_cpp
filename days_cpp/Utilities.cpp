@@ -35,6 +35,7 @@ void Utilities::newline()
 	std::cout << std::endl;
 }
 
+
 // Parses the string `buf` for a date in YYYY-MM-DD format. If `buf` can be parsed,
 // returns a wrapped `std::chrono::year_month_day` instances, otherwise `std::nullopt`.
 // NOTE: Once clang++ and g++ implement chrono::from_stream, this could be replaced by something like this:
@@ -101,7 +102,18 @@ std::optional<std::chrono::year_month_day> Utilities::getDateFromString(const st
 	return nullopt;
 }
 
-
+// Check if date is valid
+auto Utilities::validate_date(char* argv[], auto arg_num)
+{
+	using namespace std;
+	auto date = Utilities::getDateFromString(argv[arg_num]);
+	if (!date.has_value())
+	{
+		cerr << "bad date: " << argv[3] << '\n';
+		return 0;
+	}
+	return date;
+}
 
 // Returns `date` as a string in `YYYY-MM-DD` format.
 // The ostream support for `std::chrono::year_month_day` is not
