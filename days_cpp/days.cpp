@@ -471,6 +471,11 @@ int main(int argc, char* argv[])
 		}
 
 		auto date = tools.getDateFromString(argv[3]);
+		if (!date.has_value())
+		{
+			cerr << "bad date: " << argv[3] << '\n';
+			return 0;
+		}
 
 		// if no date given, use today
 		if (argv[2] != arg_date)
