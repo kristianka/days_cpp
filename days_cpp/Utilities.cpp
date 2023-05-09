@@ -103,16 +103,29 @@ std::optional<std::chrono::year_month_day> Utilities::getDateFromString(const st
 }
 
 // Check if date is valid
-auto Utilities::validate_date(char* argv[], auto arg_num)
+auto Utilities::validate_date(char* argv[], auto arg_num, bool to_string)
 {
 	using namespace std;
-	auto date = Utilities::getDateFromString(argv[arg_num]);
-	if (!date.has_value())
+	if (to_string)
 	{
-		cerr << "bad date: " << argv[3] << '\n';
-		return 0;
+		auto date = Utilities::getStringFromDate(argv[arg_num]);
+		if (!date.has_value())
+		{
+			cerr << "bad date: " << argv[arg_num] << '\n';
+			return 0;
+		}
+		return date;
 	}
-	return date;
+	else
+	{
+		auto date = Utilities::getDateFromString(argv[arg_num]);
+		if (!date.has_value())
+		{
+			cerr << "bad date: " << argv[arg_num] << '\n';
+			return 0;
+		}
+		return date;
+	}
 }
 
 // Returns `date` as a string in `YYYY-MM-DD` format.

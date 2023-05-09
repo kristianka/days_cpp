@@ -284,7 +284,12 @@ int main(int argc, char* argv[])
 				return 0;
 			}
 
-			auto date = tools.validate_date(argv,3);
+			auto date = tools.getDateFromString(argv[3]);
+			if (!date.has_value())
+			{
+				cerr << "bad date: " << argv[3] << '\n';
+				return 0;
+			}
 
 			for (auto& event : events)
 			{
@@ -309,7 +314,12 @@ int main(int argc, char* argv[])
 				return 0;
 			}
 
-			auto date = tools.validate_date(argv, 3);
+			auto date = tools.getDateFromString(argv[3]);
+			if (!date.has_value())
+			{
+				cerr << "bad date: " << argv[3] << '\n';
+				return 0;
+			}
 
 			for (auto& event : events)
 			{
@@ -333,8 +343,19 @@ int main(int argc, char* argv[])
 				return 0;
 			}
 
-			auto before_date = tools.validate_date(argv, 3);
-			auto after_date = tools.validate_date(argv, 5);
+			auto before_date = tools.getDateFromString(argv[3]);
+			if (!before_date.has_value())
+			{
+				cerr << "bad date: " << argv[3] << '\n';
+				return 0;
+			}
+
+			auto after_date = tools.getDateFromString(argv[5]);
+			if (!after_date.has_value())
+			{
+				cerr << "bad date: " << argv[5] << '\n';
+				return 0;
+			}
 
 			for (auto& event : events)
 			{
@@ -355,7 +376,12 @@ int main(int argc, char* argv[])
 				cout << "No date given" << endl;
 			}
 
-			auto date = tools.validate_date(argv, 3);
+			auto date = tools.getDateFromString(argv[3]);
+			if (!date.has_value())
+			{
+				cerr << "bad date: " << argv[3] << '\n';
+				return 0;
+			}
 
 			for (auto& event : events)
 			{
@@ -444,7 +470,7 @@ int main(int argc, char* argv[])
 			return 0;
 		}
 
-		auto date = tools.validate_date(argv, 3);
+		auto date = tools.getDateFromString(argv[3]);
 
 		// if no date given, use today
 		if (argv[2] != arg_date)
@@ -557,7 +583,12 @@ int main(int argc, char* argv[])
 		// If --date is given as first argument after delete
 		if (argv[2] == arg_date)
 		{
-			auto date = tools.validate_date(argv, 3);
+			auto date = tools.getDateFromString(argv[3]);
+			if (!date.has_value())	
+			{
+				cerr << "bad date: " << argv[3] << '\n';
+				return 0;
+			}
 		
 			// Check if arguments have --category and --description
 			bool has_category = (argc > 5 && argv[4] == arg_category);
