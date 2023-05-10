@@ -103,13 +103,17 @@ void print_day_format(int delta, auto event)
 
 // This functions works by copying the events.csv file to a events.csv.tmp file,
 // then deleting the events.csv file and renaming the temp file to events.csv!
-void update_csv_file(auto& eventsPath, auto& tempPath, char *argv[], auto& event)
+void update_csv_file(auto& eventsPath, auto& tempPath, char *argv[], Event& event)
 {
 	try {
 		using namespace std;
 		namespace fs = std::filesystem; // save a little typing
 
-		string deleteline = argv[3];
+		std::stringstream ss;
+		ss << event.getTimestamp() << "," << event.getCategory() << "," << event.getDescription();
+		std::string event_formatted = ss.str(); // get the string from the stringstream
+
+		string deleteline = event_formatted;
 		string line;
 		string newline;
 
@@ -471,16 +475,12 @@ int main(int argc, char* argv[])
 		}
 
 		auto date = tools.getDateFromString(argv[3]);
-		if (!date.has_value())
-		{
-			cerr << "bad date: " << argv[3] << '\n';
-			return 0;
-		}
 
 		// if no date given, use today
 		if (argv[2] != arg_date)
 		{
 			date = today;
+			std::cout << "today is " << today << '\n';
 			date_given = false;
 		}
 
@@ -705,6 +705,42 @@ int main(int argc, char* argv[])
 					std::cout << "Error opening file" << std::endl;
 				}
 			}
+		}
+		string arg_between = "--between";
+
+		// --between command
+		if (argv[2] == arg_between)
+		{
+			if (argc != 5 && argc != 6)
+			{
+				cerr << "No dates given or wrong formatting" << endl;
+				return 0;
+			}
+
+			auto date1 = tools.getDateFromString(argv[3]);
+			auto date2 = tools.getDateFromString(argv[4]);
+			if (!date1.has_value() || !date2.has_value())
+			{
+				cerr << "bad date: " << argv[3] << " or " << argv[4] << '\n';
+				return 0;
+			}
+
+			// If --dry-run is given, just print what would have been deleted
+			for (auto& event : events)
+			{
+				if (event.getTimestamp() >= date1.value() && event.getTimestamp() <= date2.value() && argv[length] == arg_dry_run)
+				{
+					cout << event << " would have been deleted without dry run" << endl;
+					count++;
+				}
+
+				if (event.getTimestamp() >= date1.value() && event.getTimestamp() <= date2.value() && argv[length] != arg_dry_run)
+				{
+					update_csv_file(eventsPath, tempPath, argv, event);
+					count++;
+				}
+			}
+		
 		}
 	}
 
