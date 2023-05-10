@@ -209,6 +209,7 @@ int main(int argc, char* argv[])
 	vector<string> descriptionStrings{ document.GetColumn<string>("description") };
 
 	vector<Event> events;
+
 	for (size_t i{ 0 }; i < dateStrings.size(); i++)
 	{
 		auto date = tools.getDateFromString(dateStrings.at(i));
@@ -223,6 +224,12 @@ int main(int argc, char* argv[])
 			categoryStrings.at(i),
 			descriptionStrings.at(i) };
 		events.push_back(event);
+	}
+
+	if (events.size() == 0)
+	{
+		cout << "No events found" << endl;
+		return 0;
 	}
 
 	const auto today = chrono::sys_days{
@@ -259,7 +266,6 @@ int main(int argc, char* argv[])
 			{
 				const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
 				print_day_format(delta, event);
-				count++;
 			}
 			return 0;
 		}
@@ -692,11 +698,12 @@ int main(int argc, char* argv[])
 				// Empty events.csv
 				try
 				{
-					std::ofstream ofs;
-					ofs.open(eventsPath.string(), std::ofstream::out | std::ofstream::trunc);
-					ofs.close();
+					for (auto& event : events)
+					{
+						update_csv_file(eventsPath, tempPath, argv, event);
+						count++;
+					}
 					cout << "Deleted all events" << endl;
-					count++;
 				}
 				catch (const std::exception&)
 				{
