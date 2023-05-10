@@ -480,7 +480,6 @@ int main(int argc, char* argv[])
 		if (argv[2] != arg_date)
 		{
 			date = today;
-			std::cout << "today is " << today << '\n';
 			date_given = false;
 		}
 
@@ -535,7 +534,6 @@ int main(int argc, char* argv[])
 		try
 		{
 			ofstream file;
-			std::cout << eventsPath.string() << std::endl;
 			file.open(eventsPath.string(), std::ios::out | std::ios::app);
 			file << event_formatted << endl;
 			file.close();
