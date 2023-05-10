@@ -22,6 +22,29 @@ Course project for Ohjelmoinnin syventävät teknologiat -course. Original code 
 
 ---
 
+### Example ```events.csv``` file
+
+```
+date,category,description
+1985-12-31,computing,C++ released
+2010-01-01,sport,Go
+2014-11-12,computing,.NET Core released
+2020-12-15,computing,C++20 released
+2022-09-20,computing,Java SE 19 released
+2023-01-10,computing,Rust 1.66.1 released
+2023-03-12,games,New game releases
+2023-05-09,school,Today is Tuesday
+2023-05-10,school,Today is Wednesday
+2023-05-10,school,Starting course work
+2023-05-10,,This is a event without category
+2023-06-23,holidays,Juhannusaatto
+2023-06-30,quarters,Quarter 2 ends
+2023-12-31,computing,C++23 released
+2030-01-01,,No category
+2030-01-01,,No category
+2038-01-19,computing,Unix clock rolls over
+```
+
 ### Acknowledgments
 
 
