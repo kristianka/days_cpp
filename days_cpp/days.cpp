@@ -444,34 +444,15 @@ int main(int argc, char* argv[])
 			return 0;
 		}
 
-		// Add category and description, different loops
-		// depending on if date is given or not
-		if (date_given)
+		for (int i = 2; i < argc; i++)
 		{
-			for (int i = 4; i < argc; i++)
+			if (argv[i] == arg_category)
 			{
-				if (argv[i] == arg_category)
-				{
-					category = argv[i + 1];
-				}
-				if (argv[i] == arg_description)
-				{
-					description = argv[i + 1];
-				}
+				category = argv[i + 1];
 			}
-		}
-		if (!date_given)
-		{
-			for (int i = 2; i < argc; i++)
+			if (argv[i] == arg_description)
 			{
-				if (argv[i] == arg_category)
-				{
-					category = argv[i + 1];
-				}
-				if (argv[i] == arg_description)
-				{
-					description = argv[i + 1];
-				}
+				description = argv[i + 1];
 			}
 		}
 
