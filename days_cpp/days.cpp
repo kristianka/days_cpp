@@ -284,122 +284,70 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		// if argument afrer list is --before-date, print events before given date
-		if (argv[2] == arg_before && argc <= 4)
-		{
-			// check if date is given
-			if (argc == 3)
-			{
-				cout << "No date given" << endl;
-				return 0;
-			}
-
-			auto date = tools.getDateFromString(argv[3]);
-			if (!date.has_value())
-			{
-				cerr << "bad date: " << argv[3] << '\n';
-				return 0;
-			}
-
-			for (auto& event : events)
-			{
-				const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
-				// check if current date is before given date
-				if (event.getTimestamp() < date.value())
-				{
-					print_day_format(delta, event);
-					count++;
-				}
-			}
-			return 0;
-		}
-
-		// if argument after list is --after-date, print events after given date
-		if (argv[2] == arg_after && argc <= 4)
-		{
-			// check if date is given
-			if (argc == 3)
-			{
-				cout << "No date given" << endl;
-				return 0;
-			}
-
-			auto date = tools.getDateFromString(argv[3]);
-			if (!date.has_value())
-			{
-				cerr << "bad date: " << argv[3] << '\n';
-				return 0;
-			}
-
-			for (auto& event : events)
-			{
-				// check if current date is after given date
-				if (event.getTimestamp() > date.value())
-				{
-					const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
-					print_day_format(delta, event);
-					count++;
-				}
-			}
-		}
-
-		// combine both-- before-date and --after-date
-		if (argv[2] == arg_before && argv[4] == arg_after && argc <= 6)
-		{
-			// check if date is given
-			if (argc != 6)
-			{
-				cout << "No enough arguments given" << endl;
-				return 0;
-			}
-
-			auto before_date = tools.getDateFromString(argv[3]);
-			if (!before_date.has_value())
-			{
-				cerr << "bad date: " << argv[3] << '\n';
-				return 0;
-			}
-
-			auto after_date = tools.getDateFromString(argv[5]);
-			if (!after_date.has_value())
-			{
-				cerr << "bad date: " << argv[5] << '\n';
-				return 0;
-			}
-
-			for (auto& event : events)
-			{
-				if (event.getTimestamp() < before_date.value() || event.getTimestamp() > after_date.value())
-				{
-					const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
-					print_day_format(delta, event);
-					count++;
-				}
-			}
-		}
-
-		// if argument after list is --date, print events on given date
-		if (argv[2] == arg_date && argc <= 4)
+		// List events by before, after or both. Also list events on a specific date
+		if (argc > 2 && (argv[2] == arg_before || argv[2] == arg_after || argv[2] == arg_date))
 		{
 			if (argc < 4)
 			{
 				cout << "No date given" << endl;
+				return 0;
 			}
 
-			auto date = tools.getDateFromString(argv[3]);
-			if (!date.has_value())
+			bool before = false;
+			bool after = false;
+			bool on_this_date = false;
+			auto date1 = tools.getDateFromString(argv[3]);
+			auto date2 = tools.getDateFromString(argv[3]);
+
+			if (argv[2] == arg_before)
 			{
-				cerr << "bad date: " << argv[3] << '\n';
-				return 0;
+				before = true;
+			}
+
+			if (argv[2] == arg_after)
+			{
+				after = true;
+			}
+
+			if (argc > 4 && argv[2] == arg_before && argv[4] == arg_after)
+			{
+				before = true;
+				after = true;
+				date1 = tools.getDateFromString(argv[3]);
+				date2 = tools.getDateFromString(argv[5]);
+			}
+
+			if (argv[2] == arg_date)
+			{
+				on_this_date = true;
 			}
 
 			for (auto& event : events)
 			{
 				const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
-				if (event.getTimestamp() == date)
+				if (before)
 				{
-					print_day_format(delta, event);
-					count++;
+					if (event.getTimestamp() < date1)
+					{
+						print_day_format(delta, event);
+						count++;
+					}
+				}
+				if (after)
+				{
+					if (event.getTimestamp() > date2)
+					{
+						print_day_format(delta, event);
+						count++;
+					}
+				}
+				if (on_this_date)
+				{
+					if (event.getTimestamp() == date1)
+					{
+						print_day_format(delta, event);
+						count++;
+					}
 				}
 			}
 		}
