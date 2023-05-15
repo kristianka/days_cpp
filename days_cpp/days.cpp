@@ -106,9 +106,8 @@ void print_day_format(int delta, auto event)
 void update_csv_file(auto& eventsPath, auto& tempPath, char *argv[], Event& event)
 {
 	try {
-		using namespace std;
 		namespace fs = std::filesystem; // save a little typing
-
+		using std::string;
 		std::stringstream ss;
 		ss << event.getTimestamp() << "," << event.getCategory() << "," << event.getDescription();
 		std::string event_formatted = ss.str(); // get the string from the stringstream
@@ -118,14 +117,14 @@ void update_csv_file(auto& eventsPath, auto& tempPath, char *argv[], Event& even
 		string newline;
 
 		// events file
-		ifstream fin;
+		std::ifstream fin;
 		fin.open(eventsPath.string());
 
 		// temp file
-		ofstream temp;
+		std::ofstream temp;
 		temp.open(tempPath.string());
 
-		while (getline(fin, line)) {
+		while (std::getline(fin, line)) {
 			if (line.find(deleteline) == std::string::npos) {
 				temp << line << "\n";
 			}
@@ -138,7 +137,7 @@ void update_csv_file(auto& eventsPath, auto& tempPath, char *argv[], Event& even
 		fs::remove(eventsPath.string().c_str());
 		fs::rename(tempPath.string().c_str(), eventsPath.string().c_str());
 
-		cout << "Deleted event " << event << endl;
+		std::cout << "Deleted event " << event << std::endl;
 	}
 	catch (const std::exception&)
 	{
@@ -148,16 +147,16 @@ void update_csv_file(auto& eventsPath, auto& tempPath, char *argv[], Event& even
 
 int main(int argc, char* argv[])
 {
-	using namespace std;
 	Utilities tools;
+	using std::cout, std::string, std::endl, std::vector, std::ofstream;
 	// Get the current date from the system clock and extract year_month_day.
 	// See https://en.cppreference.com/w/cpp/chrono/year_month_day
-	const chrono::time_point now = chrono::system_clock::now();
-	const chrono::year_month_day currentDate{ chrono::floor<chrono::days>(now) };
+	const std::chrono::time_point now = std::chrono::system_clock::now();
+	const std::chrono::year_month_day currentDate{ std::chrono::floor<std::chrono::days>(now) };
 
 	// Construct a path for the events file.
 	// If the user's home directory can't be determined, give up.
-	string homeDirectoryString;
+	std::string homeDirectoryString;
 	auto homeString = tools.getEnvironmentVariable("HOME");
 	if (!homeString.has_value())
 	{
@@ -215,7 +214,7 @@ int main(int argc, char* argv[])
 		auto date = tools.getDateFromString(dateStrings.at(i));
 		if (!date.has_value())
 		{
-			cerr << "bad date at row " << i << ": " << dateStrings.at(i) << '\n';
+			std::cerr << "bad date at row " << i << ": " << dateStrings.at(i) << '\n';
 			continue;
 		}
 
@@ -232,8 +231,8 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	const auto today = chrono::sys_days{
-		floor<chrono::days>(chrono::system_clock::now()) };
+	const auto today = std::chrono::sys_days{
+		floor<std::chrono::days>(std::chrono::system_clock::now()) };
 
 
 	// Command line arguments
@@ -264,7 +263,7 @@ int main(int argc, char* argv[])
 		{
 			for (auto& event : events)
 			{
-				const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
+				const auto delta = (std::chrono::sys_days{ event.getTimestamp() } - today).count();
 				print_day_format(delta, event);
 			}
 			return 0;
@@ -275,7 +274,7 @@ int main(int argc, char* argv[])
 		{
 			for (auto& event : events)
 			{
-				const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
+				const auto delta = (std::chrono::sys_days{ event.getTimestamp() } - today).count();
 				if (delta == 0)
 				{
 					print_day_format(delta, event);
@@ -324,7 +323,7 @@ int main(int argc, char* argv[])
 
 			for (auto& event : events)
 			{
-				const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
+				const auto delta = (std::chrono::sys_days{ event.getTimestamp() } - today).count();
 				if (before)
 				{
 					if (event.getTimestamp() < date1)
@@ -377,7 +376,7 @@ int main(int argc, char* argv[])
 					// If the event category is not in the arg_categories vector, then print it
 					if (std::find(arg_categories.begin(), arg_categories.end(), event.getCategory()) == arg_categories.end())
 					{
-						const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
+						const auto delta = (std::chrono::sys_days{ event.getTimestamp() } - today).count();
 						print_day_format(delta, event);
 						count++;
 					}
@@ -387,7 +386,7 @@ int main(int argc, char* argv[])
 					// If the event category is in the arg_categories vector, then print it
 					if (std::find(arg_categories.begin(), arg_categories.end(), event.getCategory()) != arg_categories.end())
 					{
-						const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
+						const auto delta = (std::chrono::sys_days{ event.getTimestamp() } - today).count();
 						print_day_format(delta, event);
 						count++;
 					}
@@ -402,7 +401,7 @@ int main(int argc, char* argv[])
 			{
 				if (event.getCategory() == "")
 				{
-					const auto delta = (chrono::sys_days{ event.getTimestamp() } - today).count();
+					const auto delta = (std::chrono::sys_days{ event.getTimestamp() } - today).count();
 					print_day_format(delta, event);
 					count++;
 				}
@@ -440,7 +439,7 @@ int main(int argc, char* argv[])
 		// check if date is valid
 		if (date_given == true && !date.has_value())
 		{
-			cerr << "bad date: " << argv[3] << '\n';
+			std::cerr << "bad date: " << argv[3] << '\n';
 			return 0;
 		}
 
@@ -490,27 +489,30 @@ int main(int argc, char* argv[])
 	// If delete is given as first argument after days
 	if (argv[1] == arg_delete)
 	{
+
 		if (argc < 3)
 		{
-			cout << "No date given or wrong formatting" << endl;
+			std::cout << "No date given or wrong formatting" << endl;
 			return 0;
 		}
 
 		int length = argc - 1;
 
-		// If --description is given as first argument after delete
-		if (argv[2] == arg_description)
+		// If --description or --category is given as first argument after delete
+		if (argc > 2 && (argv[2] == arg_description || argv[2] == arg_category))
 		{
+			bool is_description = (argv[2] == arg_description);
 			for (auto& event : events)
 			{
-
-				if (event.getDescription().starts_with(argv[3]) && argv[length] == arg_dry_run)
+				if ((is_description && event.getDescription().starts_with(argv[3]) && argv[length] == arg_dry_run)
+					|| (!is_description && event.getCategory() == argv[3] && argv[length] == arg_dry_run))
 				{
-					cout <<  event << " would have been deleted without dry run" << endl;
+					std::cout <<  event << " would have been deleted without dry run" << endl;
 					count++;
 				}
 
-				if (event.getDescription().starts_with(argv[3]) && argv[length] != arg_dry_run)
+				if ((is_description && event.getDescription().starts_with(argv[3]) && argv[length] != arg_dry_run)
+					|| (!is_description && event.getCategory() == argv[3] && argv[length] != arg_dry_run))
 				{
 					update_csv_file(eventsPath, tempPath, argv, event);
 					count++;
@@ -524,7 +526,7 @@ int main(int argc, char* argv[])
 			auto date = tools.getDateFromString(argv[3]);
 			if (!date.has_value())	
 			{
-				cerr << "bad date: " << argv[3] << '\n';
+				std::cerr << "bad date: " << argv[3] << '\n';
 				return 0;
 			}
 		
@@ -558,7 +560,7 @@ int main(int argc, char* argv[])
 						// Find events with given date and category. If --dry-run is given, print out the events that would have been deleted
 						if (event.getTimestamp() == date.value() && event.getCategory() == category && argv[length] == arg_dry_run)
 						{
-							cout << event << " would have been deleted without dry run" << endl;
+							std::cout << event << " would have been deleted without dry run" << endl;
 							count++;
 						}
 
@@ -576,7 +578,7 @@ int main(int argc, char* argv[])
 						if (event.getTimestamp() == date.value() && event.getCategory() == category &&
 							event.getDescription().starts_with(description) && argv[length] == arg_dry_run)
 						{
-							cout << event << " would have been deleted without dry run" << endl;
+							std::cout << event << " would have been deleted without dry run" << endl;
 							count++;
 						}
 
@@ -595,7 +597,7 @@ int main(int argc, char* argv[])
 				{
 					if (event.getTimestamp() == date.value() && argv[length] == arg_dry_run)
 					{
-						cout << event << " would have been deleted without dry run" << endl;
+						std::cout << event << " would have been deleted without dry run" << endl;
 						count++;
 					}
 
@@ -616,7 +618,7 @@ int main(int argc, char* argv[])
 			{
 				for (auto& event : events)
 				{
-					cout << event << " would have been deleted without dry run" << endl;
+					std::cout << event << " would have been deleted without dry run" << endl;
 					count++;
 				}
 			} 
@@ -632,7 +634,7 @@ int main(int argc, char* argv[])
 						update_csv_file(eventsPath, tempPath, argv, event);
 						count++;
 					}
-					cout << "Deleted all events" << endl;
+					std::cout << "Deleted all events" << endl;
 				}
 				catch (const std::exception&)
 				{
@@ -647,7 +649,7 @@ int main(int argc, char* argv[])
 		{
 			if (argc != 5 && argc != 6)
 			{
-				cerr << "No dates given or wrong formatting" << endl;
+				std::cerr << "No dates given or wrong formatting" << endl;
 				return 0;
 			}
 
@@ -655,7 +657,7 @@ int main(int argc, char* argv[])
 			auto date2 = tools.getDateFromString(argv[4]);
 			if (!date1.has_value() || !date2.has_value())
 			{
-				cerr << "bad date: " << argv[3] << " or " << argv[4] << '\n';
+				std::cerr << "bad date: " << argv[3] << " or " << argv[4] << '\n';
 				return 0;
 			}
 
@@ -664,7 +666,7 @@ int main(int argc, char* argv[])
 			{
 				if (event.getTimestamp() >= date1.value() && event.getTimestamp() <= date2.value() && argv[length] == arg_dry_run)
 				{
-					cout << event << " would have been deleted without dry run" << endl;
+					std::cout << event << " would have been deleted without dry run" << endl;
 					count++;
 				}
 
@@ -681,7 +683,7 @@ int main(int argc, char* argv[])
 	// If no events were printed, print this
 	if (count == 0)
 	{
-		cout << "No events found" << endl;
+		std::cout << "No events found" << endl;
 	}
 
 	return 0;
